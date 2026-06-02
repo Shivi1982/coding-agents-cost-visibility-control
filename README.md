@@ -204,7 +204,6 @@ That's it — you'll see cost, token, and code metrics in Terminal 1.
 └── docs/                       # Documentation & guides
     ├── cost_explainer.md        # CUR, IAM, roles — concepts explained
     ├── enterprise_roi_guide.md  # Enterprise ROI measurement guide
-    ├── gitlab_setup.md          # GitLab integration setup
     ├── github_webhook_setup.md  # GitHub integration setup
     └── aws_profiles_guide.md    # AWS credential profiles reference
 
@@ -373,9 +372,9 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 
 ## Author
 
-**Shivi Bhatia** — Sr. Specialist SA, GenAI/ML @ AWSBuilt for enterprise customers adopting Claude Code & Other developer coding tools on Amazon Bedrock.
+**Shivi Bhatia** — Sr. Specialist SA, GenAI/ML @ AWSBuilt for enterprise customers adopting Claude Code , Codex & Other developer coding tools on Amazon Bedrock.
 
-**Harsha Tadiparthi** - Pr. Gen AI/ML SA, Enterprises . Assisting Enterprises & Semiconductors building on Bedrock on cost visibility and controls. 
+**Harsha Tadiparthi** - Principal specialist Solutions Architect for AI. 
 
 ---
 
