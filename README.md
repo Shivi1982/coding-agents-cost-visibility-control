@@ -126,7 +126,7 @@ It uses **3 data pipelines** to capture cost, code output, and delivery quality 
 ### 1. Clone the Repository
 
 ```bash
-git clone git@ssh.gitlab.aws.dev:shivibha/coding-agents-cost-visibility-control.git
+git clone https://github.com/Shivi1982/coding-agents-cost-visibility-control.git
 cd coding-agents-cost-visibility-control
 
 ```
