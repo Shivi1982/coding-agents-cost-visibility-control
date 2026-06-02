@@ -1,0 +1,53 @@
+{
+  "_comment": [
+    "MCP Configuration for Claude Code — ROI Demo Tools",
+    "Copy this to ~/.claude/mcp.json (or merge with existing config).",
+    "",
+    "When developers use these tools in Claude Code, OTEL Stream 2",
+    "automatically captures every tool_use event with:",
+    "  • tool_name, duration_ms, pass/fail status",
+    "  • Bedrock request metadata (model_id, input/output tokens)",
+    "  • These flow → CloudWatch → QuickSight ROI Dashboard",
+    "",
+    "Each MCP server runs as a stdio subprocess managed by Claude Code.",
+    "No port conflicts, no HTTP setup — just add and go."
+  ],
+
+  "mcpServers": {
+    "semantic-search": {
+      "command": "python3",
+      "args": ["${HOME}/mcp-tools/semantic_search_mcp.py"],
+      "env": {},
+      "_description": "Intelligent doc search with query expansion. Searches internal docs/wiki with synonym expansion (auth → OAuth, SSO, SAML, JWT). OTEL tracks: search latency, result quality, expansion effectiveness.",
+      "_tools": ["semantic_search", "expand_query", "index_documents"]
+    },
+
+    "code-review": {
+      "command": "python3",
+      "args": ["${HOME}/mcp-tools/code_review_mcp.py"],
+      "env": {},
+      "_description": "Automated code review: security scan (secrets, SQLi, XSS), lint check, best practices. OTEL tracks: findings by severity, review duration, files analyzed. Critical findings caught = incidents prevented = ROI.",
+      "_tools": ["review_code", "security_scan", "lint_check"]
+    },
+
+    "cicd-trigger": {
+      "command": "python3",
+      "args": ["${HOME}/mcp-tools/cicd_trigger_mcp.py"],
+      "env": {
+        "GITLAB_BASE_URL": "https://gitlab.com",
+        "GITLAB_TOKEN": "",
+        "GITLAB_PROJECT_ID": ""
+      },
+      "_description": "GitLab CI/CD pipeline management. Trigger pipelines, check status, get logs. OTEL tracks: trigger latency, pipeline outcomes, developer time saved vs manual GitLab navigation.",
+      "_tools": ["trigger_pipeline", "get_pipeline_status", "get_latest_pipelines", "get_job_logs", "retry_pipeline", "cancel_pipeline"]
+    },
+
+    "calculator": {
+      "command": "python3",
+      "args": ["${HOME}/mcp-tools/calculator_mcp.py"],
+      "env": {},
+      "_description": "Token budget estimator and cost calculator for all Bedrock models. OTEL tracks: estimation requests, model preferences, budget awareness. Teams that estimate costs have lower Bedrock spend.",
+      "_tools": ["estimate_cost", "compare_models", "budget_check", "list_models"]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Step 4: Add webhook to GitLab repo (manual steps)
+# GitLab webhook setup cannot be automated via CLI — must be done in the web UI
+
+WEBHOOK_URL="https://cg1qaoi970.execute-api.us-west-2.amazonaws.com/prod/webhook"
+REPO_URL="https://gitlab.aws.dev/YOUR_USERNAME/YOUR_REPO_NAME"
+
+echo "======================================"
+echo "Adding Webhook to GitLab"
+echo "======================================"
+echo ""
+echo "Step 1: Go to your repo"
+echo "  $REPO_URL"
+echo ""
+echo "Step 2: Settings → Webhooks (in left sidebar)"
+echo ""
+echo "Step 3: Click 'Add webhook'"
+echo ""
+echo "Step 4: Fill in the form:"
+echo "  URL: $WEBHOOK_URL"
+echo ""
+echo "Step 5: Trigger events — CHECK ONLY:"
+echo "  ☑ Merge request events"
+echo ""
+echo "Step 6: When to trigger — CHECK ONLY:"
+echo "  ☑ Merge request (any action that updates/closes MR)"
+echo ""
+echo "Step 7: Click 'Add webhook'"
+echo ""
+echo "======================================"
+echo ""
+echo "✅ Webhook added!"
+echo ""
+echo "Next: Merge a test MR to your repo to trigger the webhook."
+echo "Watch CloudWatch Metrics to see if PRsMerged appears."
+echo ""

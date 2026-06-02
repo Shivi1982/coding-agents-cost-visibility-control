@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Enterprise — ROI Dashboard</title>
+<style>
+/* ============================================================
+   FONTS — DM Serif Display (headings), JetBrains Mono (data)
+   Embedded via @font-face with Google Fonts CSS API fallback
+   ============================================================ */
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://fonts.gstatic.com/s/dmserifdisplay/v15/-nFnOHM81r4j6k0gjAW3mujVU2B2G_5x0g.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsaaDhw.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  src: url('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKxjPVmUsR6chw.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* ============================================================
+   OKLCH COLOR SYSTEM
+   ============================================================ */
+:root {
+  --bg-deep:    oklch(0.13 0.02 270);
+  --bg-base:    oklch(0.16 0.02 270);
+  --bg-surface: oklch(0.20 0.02 270);
+  --bg-raised:  oklch(0.24 0.02 270);
+  --bg-hover:   oklch(0.28 0.03 270);
+
+  --border-subtle: oklch(0.30 0.02 270);
+  --border-mid:    oklch(0.38 0.02 270);
+
+  --text-primary:   oklch(0.95 0.01 270);
+  --text-secondary: oklch(0.72 0.02 270);
+  --text-muted:     oklch(0.55 0.02 270);
+
+  --accent:        oklch(0.72 0.18 160);
+  --accent-dim:    oklch(0.52 0.12 160);
+  --accent-glow:   oklch(0.72 0.18 160 / 0.15);
+
+  --violet:   oklch(0.68 0.18 300);
+  --rose:     oklch(0.68 0.18 10);
+  --amber:    oklch(0.78 0.16 80);
+  --sky:      oklch(0.72 0.14 230);
+  --teal:     oklch(0.72 0.14 180);
+  --coral:    oklch(0.70 0.16 30);
+  --lime:     oklch(0.78 0.18 130);
+  --slate:    oklch(0.60 0.04 270);
+
+  --success: oklch(0.72 0.18 150);
+  --warning: oklch(0.78 0.16 80);
+  --danger:  oklch(0.68 0.20 25);
+  --info:    oklch(0.72 0.14 230);
+
+  --font-display: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans:    system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 8px 32px oklch(0 0 0 / 0.5);
+
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 350ms ease-out;
+}
+
+/* ============================================================
+   RESET + BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+::selection { background: oklch(0.72 0.18 160 / 0.3); color: var(--text-primary); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-mid); }
+
+/* ============================================================
+   SIDEBAR NAV
+   ============================================================ */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg-base);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+}
+.sidebar-brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.sidebar-brand h1 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  line-height: 1.2;
+  font-weight: 400;
+}
+.sidebar-brand span {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.87rem;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.nav-item.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 500;
+}
+.nav-item .nav-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main {
+  margin-left: 240px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text-primary);
+}
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-family: var(--font-mono);
+}
+.search-trigger:hover { border-color: var(--border-mid); color: var(--text-secondary); }
+.search-trigger kbd {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  background: var(--bg-raised);
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.content-area {
+  flex: 1;
+  padding: 28px 32px 40px;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+.kpi-card:hover {
+  border-color: var(--border-mid);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.kpi-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.kpi-delta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.kpi-delta.up { color: var(--success); background: oklch(0.72 0.18 150 / 0.12); }
+.kpi-delta.down { color: var(--danger); background: oklch(0.68 0.20 25 / 0.12); }
+.kpi-sparkline {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 120px;
+  height: 50px;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+.table-container {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.table-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.table-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+thead th:hover { color: var(--text-secondary); }
+thead th.sorted { color: var(--accent); }
+thead th .sort-arrow { font-size: 0.6rem; margin-left: 3px; }
+tbody td {
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid oklch(0.20 0.01 270);
+  white-space: nowrap;
+}
+tbody tr { cursor: pointer; transition: background var(--transition-fast); }
+tbody tr:hover td { background: var(--bg-hover); }
+tbody tr.expanded td { background: var(--bg-raised); }
+td.dev-name {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.dev-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-right: 10px;
+  color: var(--bg-deep);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.detail-row td { padding: 0 !important; border: none !important; }
+.detail-panel {
+  padding: 20px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.detail-stat {
+  text-align: center;
+}
+.detail-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.detail-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   CHARTS (hand-rolled SVG containers)
+   ============================================================ */
+.chart-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.chart-panel-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.chart-svg { width: 100%; display: block; }
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+  justify-content: center;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   TOOL USAGE STACKED BARS
+   ============================================================ */
+.stacked-bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.stacked-bar-label {
+  width: 110px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: right;
+  flex-shrink: 0;
+}
+.stacked-bar-track {
+  flex: 1;
+  height: 28px;
+  background: var(--bg-raised);
+  border-radius: var(--radius-sm);
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+.stacked-bar-seg {
+  height: 100%;
+  transition: width var(--transition-slow);
+  position: relative;
+  cursor: pointer;
+  min-width: 2px;
+}
+.stacked-bar-seg:hover { filter: brightness(1.2); }
+.stacked-bar-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-deep);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+}
+.stacked-bar-seg:hover .stacked-bar-tooltip { display: block; }
+.stacked-bar-total {
+  width: 50px;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   SESSION-MR LINKAGE
+   ============================================================ */
+.linkage-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.linkage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.linkage-header:hover { background: var(--bg-hover); }
+.linkage-mr-title {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.linkage-mr-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.linkage-cost {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.linkage-body {
+  display: none;
+  border-top: 1px solid var(--border-subtle);
+  padding: 16px 20px;
+}
+.linkage-card.open .linkage-body { display: block; }
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  margin: 3px;
+}
+.sha-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  background: oklch(0.72 0.18 300 / 0.15);
+  color: var(--violet);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   COST TRENDS LINE CHART
+   ============================================================ */
+.line-chart-container { position: relative; }
+.line-chart-tooltip {
+  display: none;
+  position: absolute;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+.anomaly-marker {
+  fill: var(--danger);
+  cursor: pointer;
+}
+
+/* ============================================================
+   ROI CALCULATOR
+   ============================================================ */
+.roi-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.roi-input-group label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.roi-input-group input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+.roi-input-group input:focus { border-color: var(--accent); }
+.roi-results {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.roi-result-card {
+  text-align: center;
+  padding: 24px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+.roi-result-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.roi-result-value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.roi-result-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ============================================================
+   LOAD DATA PANEL
+   ============================================================ */
+.data-loader {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.data-loader summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.data-loader summary::marker { content: ''; }
+.data-loader summary::before { content: '▸ '; font-family: var(--font-mono); color: var(--accent); }
+.data-loader[open] summary::before { content: '▾ '; }
+.data-loader-content { margin-top: 12px; }
+.cw-query {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-bottom: 10px;
+  max-height: 120px;
+  overflow-y: auto;
+  position: relative;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.copy-btn:hover { color: var(--text-primary); border-color: var(--border-mid); }
+.json-input {
+  width: 100%;
+  height: 80px;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  resize: vertical;
+  outline: none;
+}
+.json-input:focus { border-color: var(--accent); }
+.load-btn {
+  margin-top: 8px;
+  padding: 7px 16px;
+  background: var(--accent);
+  color: var(--bg-deep);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.load-btn:hover { filter: brightness(1.1); }
+
+/* ============================================================
+   COMMAND PALETTE (⌘K)
+   ============================================================ */
+.cmd-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: oklch(0 0 0 / 0.6);
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 15vh;
+}
+.cmd-overlay.open { display: flex; }
+.cmd-palette {
+  width: 560px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.cmd-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cmd-input-wrap svg { color: var(--text-muted); flex-shrink: 0; }
+.cmd-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  outline: none;
+}
+.cmd-input::placeholder { color: var(--text-muted); }
+.cmd-results {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+}
+.cmd-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.cmd-result-item:hover, .cmd-result-item.selected { background: var(--bg-hover); }
+.cmd-result-name { font-weight: 500; color: var(--text-primary); font-size: 0.88rem; }
+.cmd-result-meta { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); }
+.cmd-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   TAB SECTIONS
+   ============================================================ */
+.tab-section { display: none; }
+.tab-section.active { display: block; }
+
+/* ============================================================
+   BADGES & PILLS
+   ============================================================ */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.badge-success { background: oklch(0.72 0.18 150 / 0.15); color: var(--success); }
+.badge-warning { background: oklch(0.78 0.16 80 / 0.15); color: var(--warning); }
+.badge-danger  { background: oklch(0.68 0.20 25 / 0.15); color: var(--danger); }
+.badge-info    { background: oklch(0.72 0.14 230 / 0.15); color: var(--info); }
+
+/* ============================================================
+   PROGRESS RING (for productivity score)
+   ============================================================ */
+.prod-ring {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-block;
+  vertical-align: middle;
+}
+.prod-ring svg { transform: rotate(-90deg); }
+.prod-ring-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   SECTION HEADER
+   ============================================================ */
+.section-header {
+  margin-bottom: 20px;
+}
+.section-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.section-header p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .sidebar, .topbar, .data-loader, .search-trigger, .cmd-overlay, .load-btn { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content-area { max-width: 100% !important; padding: 0 !important; }
+  .kpi-card, .chart-panel, .table-container, .linkage-card {
+    border: 1px solid #ccc !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .kpi-value, .dev-name, .table-title, .chart-panel-title { color: #000 !important; }
+  td, th { color: #333 !important; border-color: #ddd !important; }
+  .tab-section { display: block !important; page-break-before: always; }
+  .tab-section:first-child { page-break-before: auto; }
+  @page { margin: 1.5cm; }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .roi-form { grid-template-columns: 1fr; }
+  .roi-results { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .content-area { padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   ANIMATIONS (applied via JS at end)
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .anim-in {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  }
+  .anim-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h1>Claude Code</h1>
+    <span>Enterprise ROI Dashboard</span>
+  </div>
+  <div class="sidebar-nav">
+    <button class="nav-item active" data-tab="overview">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </span>
+      Overview
+    </button>
+    <button class="nav-item" data-tab="developers">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      Per-Developer
+    </button>
+    <button class="nav-item" data-tab="tools">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </span>
+      Tool Usage
+    </button>
+    <button class="nav-item" data-tab="linkage">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </span>
+      Session↔MR
+    </button>
+    <button class="nav-item" data-tab="trends">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </span>
+      Cost Trends
+    </button>
+    <button class="nav-item" data-tab="roi">
+      <span class="nav-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </span>
+      ROI Calculator
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    v1.0.0 — data via CW Logs Insights
+  </div>
+</nav>
+
+<!-- ===================== MAIN ===================== -->
+<div class="main">
+  <header class="topbar">
+    <h2 class="topbar-title" id="topbar-title">Overview</h2>
+    <div class="topbar-actions">
+      <button class="search-trigger" id="search-trigger">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search developers…
+        <kbd>⌘K</kbd>
+      </button>
+    </div>
+  </header>
+
+  <div class="content-area">
+
+    <!-- =================== OVERVIEW TAB =================== -->
+    <section class="tab-section active" id="tab-overview">
+      <div class="section-header">
+        <h2>Dashboard Overview</h2>
+        <p>Aggregate metrics across all developers — last 14 days</p>
+      </div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <details class="data-loader">
+        <summary>📡 Load Data from CloudWatch</summary>
+        <div class="data-loader-content">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:10px;">Copy this query into CW Logs Insights, run it, then paste the JSON result below.</p>
+          <div class="cw-query" id="cw-overview-query">fields @timestamp, @message
+| filter @message like /claude-code-session/
+| stats sum(cost_usd) as total_cost,
+        count(distinct session_id) as total_sessions,
+        avg(cycle_time_hrs) as avg_cycle_time,
+        sum(prs_merged) as total_prs,
+        avg(build_pass_rate) as avg_build_rate
+| by bin(1d)
+| sort @timestamp desc
+| limit 14</div>
+          <textarea class="json-input" id="overview-json" placeholder='Paste CW Logs Insights JSON result here...'></textarea>
+          <button class="load-btn" onclick="loadOverviewData()">Load Data</button>
+        </div>
+      </details>
+
+      <div class="chart-panel anim-in">
+        <div class="chart-panel-title">Daily Cost & PR Volume (14-day)</div>
+        <div id="overview-chart" style="height: 220px;"></div>
+      </div>
+    </section>
+
+    <!-- =================== PER-DEVELOPER TAB =================== -->
+    <section class="tab-section" id="tab-developers">
+      <div class="section-header">
+        <h2>Per-Developer Metrics</h2>
+        <p>Click any row to expand detailed breakdown. Click column headers to sort.</p>
+      </div>
+
+      <details class="data-loader">
+        <summary>📡 Load Data from CloudWatch</summary>
+        <div class="data-loader-content">
+          <div class="cw-query">fields @timestamp, @message
+| filter @message like /claude-code-session/
+| stats count(*) as sessions,
+        sum(cost_usd) as cost,
+        sum(total_tokens) as tokens,
+        sum(lines_added) as lines_added,
+        sum(commits) as commits,
+        sum(prs_merged) as prs,
+        avg(cycle_time_hrs) as cycle_time,
+        avg(build_pass_rate) as build_rate,
+        avg(acceptance_rate) as acceptance_rate
+| by developer
+| sort cost desc</div>
+          <textarea class="json-input" id="dev-json" placeholder='Paste CW Logs Insights JSON result here...'></textarea>
+          <button class="load-btn" onclick="loadDevData()">Load Data</button>
+        </div>
+      </details>
+
+      <div class="table-container anim-in">
+        <div class="table-header-bar">
+          <span class="table-title">Developer Performance</span>
+          <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);" id="dev-count">8 developers</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table id="dev-table">
+            <thead>
+              <tr>
+                <th data-key="name">Developer</th>
+                <th data-key="sessions">Sessions</th>
+                <th data-key="cost">Cost</th>
+                <th data-key="tokens">Tokens</th>
+                <th data-key="lines_added">Lines+</th>
+                <th data-key="commits">Commits</th>
+                <th data-key="prs">PRs</th>
+                <th data-key="cycle_time">Cycle</th>
+                <th data-key="build_rate">Build%</th>
+                <th data-key="cost_per_pr">$/PR</th>
+                <th data-key="acceptance_rate">Accept%</th>
+                <th data-key="productivity_score">Score</th>
+              </tr>
+            </thead>
+            <tbody id="dev-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== TOOL USAGE TAB =================== -->
+    <section class="tab-section" id="tab-tools">
+      <div class="section-header">
+        <h2>Tool Usage Breakdown</h2>
+        <p>Horizontal stacked bars showing tool invocations per developer</p>
+      </div>
+
+      <details class="data-loader">
+        <summary>📡 Load Data from CloudWatch</summary>
+        <div class="data-loader-content">
+          <div class="cw-query">fields @timestamp, @message
+| filter @message like /tool_invocation/
+| stats count(*) as invocations
+| by developer, tool_name
+| sort developer asc, invocations desc</div>
+          <textarea class="json-input" id="tools-json" placeholder='Paste CW Logs Insights JSON result here...'></textarea>
+          <button class="load-btn" onclick="loadToolData()">Load Data</button>
+        </div>
+      </details>
+
+      <div class="chart-panel anim-in">
+        <div class="chart-panel-title">Tool Invocations per Developer</div>
+        <div id="tool-chart"></div>
+        <div class="chart-legend" id="tool-legend"></div>
+      </div>
+    </section>
+
+    <!-- =================== SESSION↔MR LINKAGE TAB =================== -->
+    <section class="tab-section" id="tab-linkage">
+      <div class="section-header">
+        <h2>Session ↔ Merge Request Linkage</h2>
+        <p>Sessions matched to MRs via commit SHA — cost attribution per merge request</p>
+      </div>
+
+      <details class="data-loader">
+        <summary>📡 Load Data from CloudWatch</summary>
+        <div class="data-loader-content">
+          <div class="cw-query">fields @timestamp, @message
+| filter @message like /session_commit_link/
+| parse @message '{"session_id":"*","commit_sha":"*","mr_id":"*","mr_title":"*","developer":"*","cost_usd":*}' as session_id, commit_sha, mr_id, mr_title, developer, cost_usd
+| stats sum(cost_usd) as total_cost, count(distinct session_id) as sessions
+| by mr_id, mr_title, developer
+| sort total_cost desc</div>
+          <textarea class="json-input" id="linkage-json" placeholder='Paste CW Logs Insights JSON result here...'></textarea>
+          <button class="load-btn" onclick="loadLinkageData()">Load Data</button>
+        </div>
+      </details>
+
+      <div id="linkage-list" class="anim-in"></div>
+    </section>
+
+    <!-- =================== COST TRENDS TAB =================== -->
+    <section class="tab-section" id="tab-trends">
+      <div class="section-header">
+        <h2>Cost Trends</h2>
+        <p>Daily cost per developer over 14 days — anomalies highlighted in red</p>
+      </div>
+
+      <details class="data-loader">
+        <summary>📡 Load Data from CloudWatch</summary>
+        <div class="data-loader-content">
+          <div class="cw-query">fields @timestamp, @message
+| filter @message like /claude-code-session/
+| stats sum(cost_usd) as daily_cost
+| by developer, bin(1d) as day
+| sort day asc</div>
+          <textarea class="json-input" id="trends-json" placeholder='Paste CW Logs Insights JSON result here...'></textarea>
+          <button class="load-btn" onclick="loadTrendsData()">Load Data</button>
+        </div>
+      </details>
+
+      <div class="chart-panel anim-in">
+        <div class="chart-panel-title">Daily Cost per Developer (14-day)</div>
+        <div class="line-chart-container" id="trends-chart-container" style="height: 360px; position: relative;">
+          <svg id="trends-svg" class="chart-svg" style="height:100%;"></svg>
+          <div class="line-chart-tooltip" id="trends-tooltip"></div>
+        </div>
+        <div class="chart-legend" id="trends-legend"></div>
+      </div>
+    </section>
+
+    <!-- =================== ROI CALCULATOR TAB =================== -->
+    <section class="tab-section" id="tab-roi">
+      <div class="section-header">
+        <h2>ROI Calculator</h2>
+        <p>Estimate the return on investment from Claude Code adoption</p>
+      </div>
+
+      <div class="chart-panel anim-in">
+        <div class="roi-form">
+          <div class="roi-input-group">
+            <label for="roi-salary">Avg Developer Salary ($/yr)</label>
+            <input type="number" id="roi-salary" value="185000" oninput="calculateROI()">
+          </div>
+          <div class="roi-input-group">
+            <label for="roi-prs-before">Avg PRs/Week Before AI</label>
+            <input type="number" id="roi-prs-before" value="3" step="0.5" oninput="calculateROI()">
+          </div>
+          <div class="roi-input-group">
+            <label for="roi-prs-after">Avg PRs/Week After AI</label>
+            <input type="number" id="roi-prs-after" value="5.5" step="0.5" oninput="calculateROI()">
+          </div>
+        </div>
+
+        <div class="roi-form" style="margin-bottom: 28px;">
+          <div class="roi-input-group">
+            <label for="roi-devs">Number of Developers</label>
+            <input type="number" id="roi-devs" value="8" oninput="calculateROI()">
+          </div>
+          <div class="roi-input-group">
+            <label for="roi-license">Claude Code License ($/dev/mo)</label>
+            <input type="number" id="roi-license" value="100" oninput="calculateROI()">
+          </div>
+          <div class="roi-input-group">
+            <label for="roi-usage">Avg Usage Cost ($/dev/mo)</label>
+            <input type="number" id="roi-usage" value="320" oninput="calculateROI()">
+          </div>
+        </div>
+
+        <div class="roi-results" id="roi-results"></div>
+
+        <div style="margin-top:24px;">
+          <div class="chart-panel-title">Cumulative Savings vs Cost (12 months)</div>
+          <div style="height:240px;position:relative;">
+            <svg id="roi-chart" class="chart-svg" style="height:100%;"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ===================== COMMAND PALETTE ===================== -->
+<div class="cmd-overlay" id="cmd-overlay">
+  <div class="cmd-palette">
+    <div class="cmd-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="cmd-input" id="cmd-input" placeholder="Search developers…" autocomplete="off">
+    </div>
+    <div class="cmd-results" id="cmd-results"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DEMO DATA — 8 developers with realistic profiles
+// ============================================================
+const TOOL_NAMES = ['code_edit','bash','read_file','web_search','semantic_search','code_review','cicd_trigger','calculator'];
+const TOOL_COLORS = {
+  code_edit:       'oklch(0.72 0.18 160)',
+  bash:            'oklch(0.68 0.18 300)',
+  read_file:       'oklch(0.72 0.14 230)',
+  web_search:      'oklch(0.78 0.16 80)',
+  semantic_search: 'oklch(0.72 0.14 180)',
+  code_review:     'oklch(0.68 0.18 10)',
+  cicd_trigger:    'oklch(0.78 0.18 130)',
+  calculator:      'oklch(0.60 0.04 270)'
+};
+const DEV_COLORS = [
+  'oklch(0.72 0.18 160)', 'oklch(0.68 0.18 300)', 'oklch(0.72 0.14 230)',
+  'oklch(0.78 0.16 80)',  'oklch(0.70 0.16 30)',  'oklch(0.78 0.18 130)',
+  'oklch(0.72 0.14 180)', 'oklch(0.68 0.18 10)'
+];
+
+function genDays(n) {
+  const days = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
+const DAYS_14 = genDays(14);
+
+function rand(min, max) { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+const DEMO_DEVELOPERS = [
+  { name: 'Sarah Chen',      sessions: 47, cost: 892.40,  tokens: 2145000, lines_added: 3420, commits: 89, prs: 14, cycle_time: 4.2,  build_rate: 94.5, acceptance_rate: 91.2 },
+  { name: 'Marcus Rivera',   sessions: 52, cost: 1124.80, tokens: 2890000, lines_added: 4810, commits: 102, prs: 18, cycle_time: 3.8, build_rate: 96.1, acceptance_rate: 93.5 },
+  { name: 'Priya Patel',     sessions: 38, cost: 684.20,  tokens: 1720000, lines_added: 2180, commits: 64, prs: 11, cycle_time: 5.1,  build_rate: 91.3, acceptance_rate: 87.4 },
+  { name: 'James O\'Brien',  sessions: 44, cost: 956.50,  tokens: 2340000, lines_added: 3890, commits: 78, prs: 16, cycle_time: 4.5, build_rate: 93.2, acceptance_rate: 89.8 },
+  { name: 'Aisha Kwame',     sessions: 56, cost: 1345.90, tokens: 3420000, lines_added: 5240, commits: 115, prs: 21, cycle_time: 3.2, build_rate: 97.8, acceptance_rate: 95.1 },
+  { name: 'Tom Nguyen',      sessions: 31, cost: 542.10,  tokens: 1380000, lines_added: 1650, commits: 48, prs: 8,  cycle_time: 6.3, build_rate: 88.4, acceptance_rate: 82.6 },
+  { name: 'Elena Volkov',    sessions: 42, cost: 814.60,  tokens: 2050000, lines_added: 3100, commits: 72, prs: 13, cycle_time: 4.8, build_rate: 92.7, acceptance_rate: 88.9 },
+  { name: 'David Kim',       sessions: 49, cost: 1078.30, tokens: 2680000, lines_added: 4200, commits: 94, prs: 17, cycle_time: 3.9, build_rate: 95.4, acceptance_rate: 92.1 },
+];
+
+// Generate cost_per_pr and productivity_score (weighted average: 0.4*cost_efficiency + 0.3*build_rate + 0.3*acceptance_rate)
+const COST_CEILING = 150; // $/PR ceiling for normalization (above this = 0 score)
+DEMO_DEVELOPERS.forEach(d => {
+  d.cost_per_pr = d.prs > 0 ? Math.round(d.cost / d.prs * 100) / 100 : 0;
+  const costScore = Math.max(0, 1 - (d.cost_per_pr / COST_CEILING));
+  d.productivity_score = Math.round((0.4 * costScore + 0.3 * (d.build_rate / 100) + 0.3 * (d.acceptance_rate / 100)) * 100);
+});
+
+// Tool usage per developer
+const DEMO_TOOL_USAGE = DEMO_DEVELOPERS.map(d => {
+  const usage = {};
+  const base = d.sessions * 12;
+  usage.code_edit       = randInt(Math.floor(base*0.25), Math.floor(base*0.35));
+  usage.bash            = randInt(Math.floor(base*0.15), Math.floor(base*0.25));
+  usage.read_file       = randInt(Math.floor(base*0.12), Math.floor(base*0.20));
+  usage.web_search      = randInt(Math.floor(base*0.05), Math.floor(base*0.10));
+  usage.semantic_search = randInt(Math.floor(base*0.06), Math.floor(base*0.12));
+  usage.code_review     = randInt(Math.floor(base*0.08), Math.floor(base*0.15));
+  usage.cicd_trigger    = randInt(Math.floor(base*0.04), Math.floor(base*0.08));
+  usage.calculator      = randInt(Math.floor(base*0.02), Math.floor(base*0.04));
+  return { name: d.name, tools: usage };
+});
+
+// Daily cost trends
+const DEMO_TRENDS = DEMO_DEVELOPERS.map((d, i) => {
+  const baseDailyCost = d.cost / 14;
+  const days = DAYS_14.map((day, di) => {
+    let c = baseDailyCost * (0.6 + Math.random() * 0.8);
+    // Add a spike anomaly for 2 developers
+    if ((i === 1 && di === 8) || (i === 4 && di === 5)) c *= 2.8;
+    return { day, cost: Math.round(c * 100) / 100 };
+  });
+  return { name: d.name, daily: days };
+});
+
+// Session-MR linkage
+const MR_TITLES = [
+  'feat: Add real-time notification system',
+  'fix: Resolve memory leak in worker pool',
+  'refactor: Migrate auth to OAuth2 PKCE flow',
+  'feat: Implement batch export API endpoint',
+  'fix: Correct timezone handling in scheduler',
+  'feat: Add developer analytics dashboard',
+  'chore: Upgrade Node.js to v20 LTS',
+  'feat: WebSocket connection pooling',
+  'fix: Race condition in concurrent writes',
+  'feat: Add OpenTelemetry tracing spans',
+  'refactor: Decompose monolith auth service',
+  'feat: Implement rate limiting middleware',
+];
+function randomSHA() {
+  return Array.from({length: 7}, () => '0123456789abcdef'[randInt(0,15)]).join('');
+}
+const DEMO_LINKAGE = MR_TITLES.map((title, i) => {
+  const dev = DEMO_DEVELOPERS[i % DEMO_DEVELOPERS.length];
+  const sessionCount = randInt(1, 4);
+  const sessions = Array.from({length: sessionCount}, (_, j) => ({
+    id: 'ses-' + randomSHA() + randomSHA(),
+    sha: randomSHA(),
+    cost: Math.round(rand(12, 85) * 100) / 100,
+  }));
+  const totalCost = sessions.reduce((s, x) => s + x.cost, 0);
+  return {
+    mr_id: 'MR-' + (1000 + i),
+    title,
+    developer: dev.name,
+    sessions,
+    total_cost: Math.round(totalCost * 100) / 100,
+  };
+});
+
+// State
+let currentTab = 'overview';
+let devSortKey = 'cost';
+let devSortDir = -1;
+let searchFilter = '';
+let expandedDev = null;
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+const tabTitles = {
+  overview: 'Overview',
+  developers: 'Per-Developer',
+  tools: 'Tool Usage',
+  linkage: 'Session ↔ MR',
+  trends: 'Cost Trends',
+  roi: 'ROI Calculator'
+};
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+  document.getElementById('topbar-title').textContent = tabTitles[tab] || tab;
+
+  // Re-render tab content with potential search filter
+  if (tab === 'overview') renderOverview();
+  if (tab === 'developers') renderDevTable();
+  if (tab === 'tools') renderToolChart();
+  if (tab === 'linkage') renderLinkage();
+  if (tab === 'trends') renderTrendsChart();
+  if (tab === 'roi') calculateROI();
+
+  // Animate in
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#tab-' + tab + ' .anim-in').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 60);
+    });
+  });
+}
+
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// ============================================================
+// SPARKLINE SVG GENERATOR
+// ============================================================
+function sparklineSVG(data, color, w = 120, h = 50) {
+  if (!data || data.length < 2) return '';
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h * 0.8) - h * 0.1;
+    return x + ',' + y;
+  }).join(' ');
+  const areaPoints = points + ' ' + w + ',' + h + ' 0,' + h;
+  return '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="sg-'+color.replace(/[^a-z0-9]/g,'')+'" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.3"/>' +
+    '<stop offset="100%" stop-color="'+color+'" stop-opacity="0.02"/>' +
+    '</linearGradient></defs>' +
+    '<polygon points="'+areaPoints+'" fill="url(#sg-'+color.replace(/[^a-z0-9]/g,'')+')" />' +
+    '<polyline points="'+points+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
+}
+
+// ============================================================
+// OVERVIEW TAB
+// ============================================================
+function renderOverview() {
+  const devs = getFilteredDevs();
+  const totalCost = devs.reduce((s, d) => s + d.cost, 0);
+  const totalPRs = devs.reduce((s, d) => s + d.prs, 0);
+  const avgCycle = devs.reduce((s, d) => s + d.cycle_time, 0) / (devs.length || 1);
+  const avgBuild = devs.reduce((s, d) => s + d.build_rate, 0) / (devs.length || 1);
+
+  // Generate sparkline data from trends
+  const costByDay = DAYS_14.map(day => {
+    return DEMO_TRENDS.filter(t => devs.some(d => d.name === t.name))
+      .reduce((s, t) => {
+        const dayData = t.daily.find(x => x.day === day);
+        return s + (dayData ? dayData.cost : 0);
+      }, 0);
+  });
+  const prByDay = DAYS_14.map(() => randInt(5, 18)); // simplified
+
+  const kpis = [
+    { label: 'Total Cost', value: '$' + totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}), delta: '+12.4%', dir: 'up', color: 'oklch(0.72 0.18 160)', sparkData: costByDay },
+    { label: 'PRs Merged', value: totalPRs.toString(), delta: '+18.2%', dir: 'up', color: 'oklch(0.68 0.18 300)', sparkData: prByDay },
+    { label: 'Avg Cycle Time', value: avgCycle.toFixed(1) + 'h', delta: '-22.1%', dir: 'up', color: 'oklch(0.72 0.14 230)', sparkData: DAYS_14.map(() => rand(3, 7)) },
+    { label: 'Build Pass Rate', value: avgBuild.toFixed(1) + '%', delta: '+3.8%', dir: 'up', color: 'oklch(0.78 0.16 80)', sparkData: DAYS_14.map(() => rand(88, 98)) },
+  ];
+
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = kpis.map(k => {
+    return '<div class="kpi-card anim-in">' +
+      '<div class="kpi-label">' + k.label + '</div>' +
+      '<div class="kpi-value">' + k.value + '</div>' +
+      '<div class="kpi-delta ' + k.dir + '">' + (k.dir === 'up' ? '↑' : '↓') + ' ' + k.delta + '</div>' +
+      '<div class="kpi-sparkline">' + sparklineSVG(k.sparkData, k.color) + '</div>' +
+      '</div>';
+  }).join('');
+
+  renderOverviewChart(devs);
+
+  requestAnimationFrame(() => {
+    grid.querySelectorAll('.anim-in').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 80);
+    });
+  });
+}
+
+function renderOverviewChart(devs) {
+  const container = document.getElementById('overview-chart');
+  const w = container.clientWidth || 900;
+  const h = 220;
+  const pad = { t: 20, r: 20, b: 40, l: 55 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+
+  const costByDay = DAYS_14.map(day => {
+    return DEMO_TRENDS.filter(t => devs.some(d => d.name === t.name))
+      .reduce((s, t) => {
+        const dayData = t.daily.find(x => x.day === day);
+        return s + (dayData ? dayData.cost : 0);
+      }, 0);
+  });
+  const maxCost = Math.max(...costByDay) * 1.15;
+
+  let bars = '';
+  const barW = cw / DAYS_14.length * 0.6;
+  costByDay.forEach((c, i) => {
+    const x = pad.l + (i / DAYS_14.length) * cw + (cw / DAYS_14.length) * 0.2;
+    const barH = (c / maxCost) * ch;
+    const y = pad.t + ch - barH;
+    bars += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" rx="3" fill="oklch(0.72 0.18 160 / 0.6)"><title>'+DAYS_14[i]+': $'+c.toFixed(2)+'</title></rect>';
+  });
+
+  // Y-axis labels
+  let yLabels = '';
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxCost / 4) * i;
+    const y = pad.t + ch - (i / 4) * ch;
+    yLabels += '<text x="'+(pad.l - 8)+'" y="'+y+'" fill="oklch(0.55 0.02 270)" font-size="10" text-anchor="end" dominant-baseline="middle" font-family="JetBrains Mono, monospace">$'+Math.round(val)+'</text>';
+    yLabels += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(w - pad.r)+'" y2="'+y+'" stroke="oklch(0.25 0.01 270)" stroke-dasharray="3,3"/>';
+  }
+
+  // X-axis labels
+  let xLabels = '';
+  DAYS_14.forEach((day, i) => {
+    if (i % 2 === 0) {
+      const x = pad.l + (i / DAYS_14.length) * cw + (cw / DAYS_14.length) * 0.5;
+      xLabels += '<text x="'+x+'" y="'+(h - 8)+'" fill="oklch(0.55 0.02 270)" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">'+day.slice(5)+'</text>';
+    }
+  });
+
+  container.innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" xmlns="http://www.w3.org/2000/svg">' +
+    yLabels + xLabels + bars + '</svg>';
+}
+
+// ============================================================
+// PER-DEVELOPER TABLE
+// ============================================================
+function getFilteredDevs() {
+  if (!searchFilter) return [...DEMO_DEVELOPERS];
+  const q = searchFilter.toLowerCase();
+  return DEMO_DEVELOPERS.filter(d => d.name.toLowerCase().includes(q));
+}
+
+function renderDevTable() {
+  const devs = getFilteredDevs();
+  devs.sort((a, b) => {
+    const av = a[devSortKey], bv = b[devSortKey];
+    if (typeof av === 'string') return devSortDir * av.localeCompare(bv);
+    return devSortDir * (av - bv);
+  });
+
+  document.getElementById('dev-count').textContent = devs.length + ' developer' + (devs.length !== 1 ? 's' : '');
+
+  // Update sort arrows
+  document.querySelectorAll('#dev-table thead th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.key === devSortKey);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.remove();
+    if (th.dataset.key === devSortKey) {
+      th.innerHTML += '<span class="sort-arrow">' + (devSortDir > 0 ? '▲' : '▼') + '</span>';
+    }
+  });
+
+  const tbody = document.getElementById('dev-tbody');
+  const rows = devs.map((d, i) => {
+    const color = DEV_COLORS[DEMO_DEVELOPERS.indexOf(d) % DEV_COLORS.length];
+    const initials = d.name.split(' ').map(w => w[0]).join('');
+    const scoreColor = d.productivity_score >= 90 ? 'var(--success)' : d.productivity_score >= 75 ? 'var(--warning)' : 'var(--danger)';
+    const isExpanded = expandedDev === d.name;
+
+    const circumference = 2 * Math.PI * 14;
+    const offset = circumference - (d.productivity_score / 100) * circumference;
+
+    let row = '<tr class="' + (isExpanded ? 'expanded' : '') + '" data-dev="'+d.name+'">' +
+      '<td class="dev-name"><span class="dev-avatar" style="background:'+color+'">'+initials+'</span>'+d.name+'</td>' +
+      '<td>'+d.sessions+'</td>' +
+      '<td>$'+d.cost.toLocaleString('en-US',{minimumFractionDigits:2})+'</td>' +
+      '<td>'+(d.tokens/1000).toFixed(0)+'k</td>' +
+      '<td>'+d.lines_added.toLocaleString()+'</td>' +
+      '<td>'+d.commits+'</td>' +
+      '<td>'+d.prs+'</td>' +
+      '<td>'+d.cycle_time.toFixed(1)+'h</td>' +
+      '<td><span class="badge '+(d.build_rate>=95?'badge-success':d.build_rate>=90?'badge-warning':'badge-danger')+'">'+d.build_rate.toFixed(1)+'%</span></td>' +
+      '<td>$'+d.cost_per_pr.toFixed(2)+'</td>' +
+      '<td>'+d.acceptance_rate.toFixed(1)+'%</td>' +
+      '<td><div class="prod-ring"><svg width="36" height="36"><circle cx="18" cy="18" r="14" fill="none" stroke="oklch(0.25 0.01 270)" stroke-width="3"/><circle cx="18" cy="18" r="14" fill="none" stroke="'+scoreColor+'" stroke-width="3" stroke-dasharray="'+circumference+'" stroke-dashoffset="'+offset+'" stroke-linecap="round"/></svg><span class="prod-ring-label">'+d.productivity_score+'</span></div></td>' +
+      '</tr>';
+
+    if (isExpanded) {
+      row += '<tr class="detail-row"><td colspan="12"><div class="detail-panel"><div class="detail-grid">' +
+        '<div class="detail-stat"><div class="detail-stat-label">Tokens / Session</div><div class="detail-stat-value">'+(d.tokens/d.sessions/1000).toFixed(1)+'k</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Lines / Commit</div><div class="detail-stat-value">'+(d.lines_added/d.commits).toFixed(1)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Cost / Session</div><div class="detail-stat-value">$'+(d.cost/d.sessions).toFixed(2)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Commits / PR</div><div class="detail-stat-value">'+(d.commits/d.prs).toFixed(1)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Cost / 1k Tokens</div><div class="detail-stat-value">$'+(d.cost/(d.tokens/1000)).toFixed(4)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Lines / Session</div><div class="detail-stat-value">'+(d.lines_added/d.sessions).toFixed(0)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Daily Sessions</div><div class="detail-stat-value">'+(d.sessions/14).toFixed(1)+'</div></div>' +
+        '<div class="detail-stat"><div class="detail-stat-label">Efficiency Index</div><div class="detail-stat-value">'+((d.prs * d.acceptance_rate) / (d.cost / 100)).toFixed(1)+'</div></div>' +
+        '</div></div></td></tr>';
+    }
+    return row;
+  }).join('');
+
+  tbody.innerHTML = rows;
+
+  // Row click
+  tbody.querySelectorAll('tr:not(.detail-row)').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const name = tr.dataset.dev;
+      expandedDev = expandedDev === name ? null : name;
+      renderDevTable();
+    });
+  });
+}
+
+// Column sorting
+document.querySelectorAll('#dev-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (devSortKey === key) {
+      devSortDir *= -1;
+    } else {
+      devSortKey = key;
+      devSortDir = key === 'name' ? 1 : -1;
+    }
+    renderDevTable();
+  });
+});
+
+// ============================================================
+// TOOL USAGE CHART
+// ============================================================
+function renderToolChart() {
+  const container = document.getElementById('tool-chart');
+  const filtered = getFilteredDevs();
+  const filteredNames = filtered.map(d => d.name);
+  const data = DEMO_TOOL_USAGE.filter(d => filteredNames.includes(d.name));
+
+  const maxTotal = Math.max(...data.map(d => TOOL_NAMES.reduce((s, t) => s + (d.tools[t] || 0), 0)));
+
+  container.innerHTML = data.map(d => {
+    const total = TOOL_NAMES.reduce((s, t) => s + (d.tools[t] || 0), 0);
+    const segments = TOOL_NAMES.map(t => {
+      const pct = ((d.tools[t] || 0) / maxTotal) * 100;
+      return '<div class="stacked-bar-seg" style="width:'+pct+'%;background:'+TOOL_COLORS[t]+'">' +
+        '<div class="stacked-bar-tooltip">'+t+': '+(d.tools[t]||0)+'</div></div>';
+    }).join('');
+    return '<div class="stacked-bar-row">' +
+      '<div class="stacked-bar-label">'+d.name.split(' ')[0]+'</div>' +
+      '<div class="stacked-bar-track">'+segments+'</div>' +
+      '<div class="stacked-bar-total">'+total+'</div></div>';
+  }).join('');
+
+  // Legend
+  const legend = document.getElementById('tool-legend');
+  legend.innerHTML = TOOL_NAMES.map(t =>
+    '<div class="legend-item"><div class="legend-dot" style="background:'+TOOL_COLORS[t]+'"></div>'+t+'</div>'
+  ).join('');
+}
+
+// ============================================================
+// SESSION↔MR LINKAGE
+// ============================================================
+function renderLinkage() {
+  const container = document.getElementById('linkage-list');
+  const filtered = getFilteredDevs();
+  const filteredNames = filtered.map(d => d.name);
+  const data = DEMO_LINKAGE.filter(l => filteredNames.includes(l.developer));
+
+  container.innerHTML = data.map((mr, i) => {
+    return '<div class="linkage-card anim-in" id="linkage-'+i+'">' +
+      '<div class="linkage-header" onclick="toggleLinkage('+i+')">' +
+        '<div>' +
+          '<div class="linkage-mr-title">'+mr.title+'</div>' +
+          '<div class="linkage-mr-meta">'+mr.mr_id+' · '+mr.developer+' · '+mr.sessions.length+' session'+(mr.sessions.length>1?'s':'')+'</div>' +
+        '</div>' +
+        '<div class="linkage-cost">$'+mr.total_cost.toFixed(2)+'</div>' +
+      '</div>' +
+      '<div class="linkage-body">' +
+        '<div style="margin-bottom:8px;font-size:0.75rem;color:var(--text-muted);">Linked Sessions</div>' +
+        mr.sessions.map(s =>
+          '<span class="session-pill"><span class="sha-badge">'+s.sha+'</span> '+s.id.slice(0,16)+'… <span style="color:var(--accent)">$'+s.cost.toFixed(2)+'</span></span>'
+        ).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  requestAnimationFrame(() => {
+    container.querySelectorAll('.anim-in').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), i * 40);
+    });
+  });
+}
+
+function toggleLinkage(i) {
+  const card = document.getElementById('linkage-' + i);
+  card.classList.toggle('open');
+}
+
+// ============================================================
+// COST TRENDS LINE CHART
+// ============================================================
+function renderTrendsChart() {
+  const svg = document.getElementById('trends-svg');
+  const container = document.getElementById('trends-chart-container');
+  const tooltip = document.getElementById('trends-tooltip');
+  const w = container.clientWidth || 900;
+  const h = 360;
+  const pad = { t: 20, r: 20, b: 45, l: 55 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+
+  const filtered = getFilteredDevs();
+  const filteredNames = filtered.map(d => d.name);
+  const data = DEMO_TRENDS.filter(t => filteredNames.includes(t.name));
+
+  // Find max daily cost
+  let maxCost = 0;
+  data.forEach(d => d.daily.forEach(x => { if (x.cost > maxCost) maxCost = x.cost; }));
+  maxCost *= 1.15;
+
+  // Detect anomalies (> 2x mean)
+  const anomalies = [];
+  data.forEach((dev, di) => {
+    const mean = dev.daily.reduce((s, x) => s + x.cost, 0) / dev.daily.length;
+    dev.daily.forEach((x, xi) => {
+      if (x.cost > mean * 2) {
+        anomalies.push({ dev: dev.name, dayIdx: xi, cost: x.cost, devIdx: di });
+      }
+    });
+  });
+
+  // Grid + labels
+  let content = '';
+  for (let i = 0; i <= 5; i++) {
+    const val = (maxCost / 5) * i;
+    const y = pad.t + ch - (i / 5) * ch;
+    content += '<text x="'+(pad.l-8)+'" y="'+y+'" fill="oklch(0.55 0.02 270)" font-size="10" text-anchor="end" dominant-baseline="middle" font-family="JetBrains Mono,monospace">$'+Math.round(val)+'</text>';
+    content += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(w-pad.r)+'" y2="'+y+'" stroke="oklch(0.22 0.01 270)" stroke-dasharray="3,3"/>';
+  }
+  DAYS_14.forEach((day, i) => {
+    if (i % 2 === 0) {
+      const x = pad.l + (i / (DAYS_14.length - 1)) * cw;
+      content += '<text x="'+x+'" y="'+(h-10)+'" fill="oklch(0.55 0.02 270)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">'+day.slice(5)+'</text>';
+    }
+  });
+
+  // Lines
+  data.forEach((dev, di) => {
+    const color = DEV_COLORS[DEMO_DEVELOPERS.findIndex(d => d.name === dev.name) % DEV_COLORS.length];
+    const pts = dev.daily.map((x, xi) => {
+      const px = pad.l + (xi / (DAYS_14.length - 1)) * cw;
+      const py = pad.t + ch - (x.cost / maxCost) * ch;
+      return px + ',' + py;
+    }).join(' ');
+    content += '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>';
+
+    // Dots
+    dev.daily.forEach((x, xi) => {
+      const px = pad.l + (xi / (DAYS_14.length - 1)) * cw;
+      const py = pad.t + ch - (x.cost / maxCost) * ch;
+      content += '<circle cx="'+px+'" cy="'+py+'" r="3" fill="'+color+'" opacity="0.6" data-dev="'+dev.name+'" data-day="'+x.day+'" data-cost="'+x.cost+'" class="trend-dot"/>';
+    });
+  });
+
+  // Anomaly markers
+  anomalies.forEach(a => {
+    const dev = data[data.indexOf(data.find(d => d.name === a.dev))];
+    const px = pad.l + (a.dayIdx / (DAYS_14.length - 1)) * cw;
+    const py = pad.t + ch - (a.cost / maxCost) * ch;
+    content += '<circle cx="'+px+'" cy="'+py+'" r="7" class="anomaly-marker" fill="none" stroke="oklch(0.68 0.20 25)" stroke-width="2" opacity="0.9"/>';
+    content += '<circle cx="'+px+'" cy="'+py+'" r="12" fill="oklch(0.68 0.20 25)" opacity="0.12"/>';
+  });
+
+  svg.setAttribute('viewBox', '0 0 '+w+' '+h);
+  svg.innerHTML = content;
+
+  // Tooltip
+  svg.querySelectorAll('.trend-dot').forEach(dot => {
+    dot.addEventListener('mouseenter', (e) => {
+      const rect = container.getBoundingClientRect();
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = '<strong>'+dot.dataset.dev+'</strong><br>'+dot.dataset.day+': $'+parseFloat(dot.dataset.cost).toFixed(2);
+      tooltip.style.left = (e.clientX - rect.left + 10) + 'px';
+      tooltip.style.top = (e.clientY - rect.top - 40) + 'px';
+    });
+    dot.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+  });
+
+  // Legend
+  const legend = document.getElementById('trends-legend');
+  legend.innerHTML = data.map((d, i) => {
+    const color = DEV_COLORS[DEMO_DEVELOPERS.findIndex(dd => dd.name === d.name) % DEV_COLORS.length];
+    return '<div class="legend-item"><div class="legend-dot" style="background:'+color+'"></div>'+d.name+'</div>';
+  }).join('') + '<div class="legend-item"><div class="legend-dot" style="background:oklch(0.68 0.20 25);border:2px solid oklch(0.68 0.20 25 / 0.5);width:12px;height:12px;border-radius:50%;"></div><span style="color:var(--danger)">Anomaly</span></div>';
+}
+
+// ============================================================
+// ROI CALCULATOR
+// ============================================================
+function calculateROI() {
+  const salary = parseFloat(document.getElementById('roi-salary').value) || 0;
+  const prsBefore = parseFloat(document.getElementById('roi-prs-before').value) || 0;
+  const prsAfter = parseFloat(document.getElementById('roi-prs-after').value) || 0;
+  const numDevs = parseFloat(document.getElementById('roi-devs').value) || 0;
+  const licenseCost = parseFloat(document.getElementById('roi-license').value) || 0;
+  const usageCost = parseFloat(document.getElementById('roi-usage').value) || 0;
+
+  const hourlyRate = salary / 2080; // 52 weeks * 40 hrs
+  const hoursPerPR = 40 / (prsBefore || 1); // hours per PR before
+  const additionalPRs = (prsAfter - prsBefore) * numDevs; // extra PRs per week across team
+  const weeklyValue = additionalPRs * hoursPerPR * hourlyRate;
+  const monthlyValue = weeklyValue * 4.33;
+  const annualValue = monthlyValue * 12;
+
+  const monthlyCost = (licenseCost + usageCost) * numDevs;
+  const annualCost = monthlyCost * 12;
+
+  const roiMultiplier = monthlyCost > 0 ? monthlyValue / monthlyCost : 0;
+  const netAnnualSavings = annualValue - annualCost;
+  const paybackDays = monthlyValue > 0 ? Math.ceil(monthlyCost / (monthlyValue / 30)) : 999;
+
+  const container = document.getElementById('roi-results');
+  container.innerHTML =
+    '<div class="roi-result-card"><div class="roi-result-label">ROI Multiplier</div><div class="roi-result-value">' +
+    roiMultiplier.toFixed(1) + 'x</div><div class="roi-result-sub">return per dollar spent</div></div>' +
+    '<div class="roi-result-card"><div class="roi-result-label">Net Annual Savings</div><div class="roi-result-value" style="color:' +
+    (netAnnualSavings >= 0 ? 'var(--success)' : 'var(--danger)') + '">$' + Math.abs(netAnnualSavings).toLocaleString('en-US', {maximumFractionDigits: 0}) +
+    '</div><div class="roi-result-sub">' + (netAnnualSavings >= 0 ? 'saved' : 'additional cost') + ' per year</div></div>' +
+    '<div class="roi-result-card"><div class="roi-result-label">Payback Period</div><div class="roi-result-value" style="color:var(--sky)">' +
+    paybackDays + '</div><div class="roi-result-sub">days to break even</div></div>';
+
+  // ROI chart — cumulative savings vs cost
+  renderROIChart(monthlyValue, monthlyCost);
+}
+
+function renderROIChart(monthlyValue, monthlyCost) {
+  const svg = document.getElementById('roi-chart');
+  const w = svg.parentElement.clientWidth || 800;
+  const h = 240;
+  const pad = { t: 20, r: 20, b: 35, l: 60 };
+  const cw = w - pad.l - pad.r;
+  const ch = h - pad.t - pad.b;
+
+  const months = 12;
+  const savings = Array.from({length: months + 1}, (_, i) => i * monthlyValue);
+  const costs = Array.from({length: months + 1}, (_, i) => i * monthlyCost);
+  const maxVal = Math.max(savings[months], costs[months]) * 1.1 || 1000;
+
+  let content = '';
+  // Grid
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxVal / 4) * i;
+    const y = pad.t + ch - (i / 4) * ch;
+    content += '<text x="'+(pad.l-8)+'" y="'+y+'" fill="oklch(0.55 0.02 270)" font-size="9" text-anchor="end" dominant-baseline="middle" font-family="JetBrains Mono,monospace">$'+(val/1000).toFixed(0)+'k</text>';
+    content += '<line x1="'+pad.l+'" y1="'+y+'" x2="'+(w-pad.r)+'" y2="'+y+'" stroke="oklch(0.22 0.01 270)" stroke-dasharray="3,3"/>';
+  }
+  for (let i = 0; i <= months; i++) {
+    if (i % 2 === 0) {
+      const x = pad.l + (i / months) * cw;
+      content += '<text x="'+x+'" y="'+(h-8)+'" fill="oklch(0.55 0.02 270)" font-size="9" text-anchor="middle" font-family="JetBrains Mono,monospace">M'+i+'</text>';
+    }
+  }
+
+  // Fill area between (savings > cost)
+  const savingsPts = savings.map((v, i) => {
+    const x = pad.l + (i / months) * cw;
+    const y = pad.t + ch - (v / maxVal) * ch;
+    return x + ',' + y;
+  });
+  const costsPts = costs.map((v, i) => {
+    const x = pad.l + (i / months) * cw;
+    const y = pad.t + ch - (v / maxVal) * ch;
+    return x + ',' + y;
+  });
+  const areaPts = savingsPts.join(' ') + ' ' + costsPts.reverse().join(' ');
+  content += '<polygon points="'+areaPts+'" fill="oklch(0.72 0.18 160 / 0.08)"/>';
+
+  // Lines
+  const savingsLine = savings.map((v, i) => {
+    const x = pad.l + (i / months) * cw;
+    const y = pad.t + ch - (v / maxVal) * ch;
+    return x + ',' + y;
+  }).join(' ');
+  const costsLine = costs.map((v, i) => {
+    const x = pad.l + (i / months) * cw;
+    const y = pad.t + ch - (v / maxVal) * ch;
+    return x + ',' + y;
+  }).join(' ');
+
+  content += '<polyline points="'+savingsLine+'" fill="none" stroke="oklch(0.72 0.18 160)" stroke-width="2.5" stroke-linecap="round"/>';
+  content += '<polyline points="'+costsLine+'" fill="none" stroke="oklch(0.68 0.20 25)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6,4"/>';
+
+  // Legend inline
+  content += '<circle cx="'+(pad.l + 10)+'" cy="'+(pad.t + 5)+'" r="4" fill="oklch(0.72 0.18 160)"/>';
+  content += '<text x="'+(pad.l + 20)+'" y="'+(pad.t + 9)+'" fill="oklch(0.72 0.14 270)" font-size="10" font-family="JetBrains Mono,monospace">Cumulative Value</text>';
+  content += '<circle cx="'+(pad.l + 160)+'" cy="'+(pad.t + 5)+'" r="4" fill="oklch(0.68 0.20 25)"/>';
+  content += '<text x="'+(pad.l + 170)+'" y="'+(pad.t + 9)+'" fill="oklch(0.72 0.14 270)" font-size="10" font-family="JetBrains Mono,monospace">Cumulative Cost</text>';
+
+  svg.setAttribute('viewBox', '0 0 '+w+' '+h);
+  svg.innerHTML = content;
+}
+
+// ============================================================
+// DATA LOADING FUNCTIONS (from CW paste)
+// ============================================================
+function loadOverviewData() {
+  try {
+    const raw = document.getElementById('overview-json').value;
+    const data = JSON.parse(raw);
+    // User would paste CW results — for now just re-render with demo
+    alert('Data loaded successfully! (Using parsed JSON to re-render)');
+    renderOverview();
+  } catch(e) {
+    alert('Invalid JSON. Please paste the CW Logs Insights JSON result.');
+  }
+}
+
+function loadDevData() {
+  try {
+    const raw = document.getElementById('dev-json').value;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      parsed.forEach(item => {
+        const existing = DEMO_DEVELOPERS.find(d => d.name === item.developer);
+        if (existing) {
+          Object.assign(existing, {
+            sessions: item.sessions || existing.sessions,
+            cost: item.cost || existing.cost,
+            tokens: item.tokens || existing.tokens,
+            lines_added: item.lines_added || existing.lines_added,
+            commits: item.commits || existing.commits,
+            prs: item.prs || existing.prs,
+            cycle_time: item.cycle_time || existing.cycle_time,
+            build_rate: item.build_rate || existing.build_rate,
+            acceptance_rate: item.acceptance_rate || existing.acceptance_rate,
+          });
+          existing.cost_per_pr = existing.prs > 0 ? Math.round(existing.cost / existing.prs * 100) / 100 : 0;
+        }
+      });
+      renderDevTable();
+      alert('Developer data loaded!');
+    }
+  } catch(e) {
+    alert('Invalid JSON. Please paste the CW Logs Insights JSON result.');
+  }
+}
+
+function loadToolData() {
+  try { JSON.parse(document.getElementById('tools-json').value); renderToolChart(); alert('Tool data loaded!'); }
+  catch(e) { alert('Invalid JSON.'); }
+}
+function loadLinkageData() {
+  try { JSON.parse(document.getElementById('linkage-json').value); renderLinkage(); alert('Linkage data loaded!'); }
+  catch(e) { alert('Invalid JSON.'); }
+}
+function loadTrendsData() {
+  try { JSON.parse(document.getElementById('trends-json').value); renderTrendsChart(); alert('Trends data loaded!'); }
+  catch(e) { alert('Invalid JSON.'); }
+}
+
+// ============================================================
+// COMMAND PALETTE (⌘K)
+// ============================================================
+const cmdOverlay = document.getElementById('cmd-overlay');
+const cmdInput = document.getElementById('cmd-input');
+const cmdResults = document.getElementById('cmd-results');
+
+function openCmdPalette() {
+  cmdOverlay.classList.add('open');
+  cmdInput.value = '';
+  cmdInput.focus();
+  renderCmdResults('');
+}
+function closeCmdPalette() {
+  cmdOverlay.classList.remove('open');
+}
+
+document.getElementById('search-trigger').addEventListener('click', openCmdPalette);
+
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    openCmdPalette();
+  }
+  if (e.key === 'Escape') closeCmdPalette();
+});
+
+cmdOverlay.addEventListener('click', (e) => {
+  if (e.target === cmdOverlay) closeCmdPalette();
+});
+
+cmdInput.addEventListener('input', () => {
+  renderCmdResults(cmdInput.value);
+});
+
+function renderCmdResults(query) {
+  const q = query.toLowerCase().trim();
+  const matches = DEMO_DEVELOPERS.filter(d => !q || d.name.toLowerCase().includes(q));
+
+  if (matches.length === 0) {
+    cmdResults.innerHTML = '<div class="cmd-empty">No developers found</div>';
+    return;
+  }
+
+  cmdResults.innerHTML = matches.map((d, i) => {
+    const color = DEV_COLORS[DEMO_DEVELOPERS.indexOf(d) % DEV_COLORS.length];
+    const initials = d.name.split(' ').map(w => w[0]).join('');
+    return '<div class="cmd-result-item" data-dev="'+d.name+'">' +
+      '<span class="dev-avatar" style="background:'+color+';width:32px;height:32px;font-size:0.7rem;">'+initials+'</span>' +
+      '<div><div class="cmd-result-name">'+d.name+'</div>' +
+      '<div class="cmd-result-meta">'+d.sessions+' sessions · $'+d.cost.toFixed(2)+' · '+d.prs+' PRs · Score: '+d.productivity_score+'</div></div></div>';
+  }).join('');
+
+  cmdResults.querySelectorAll('.cmd-result-item').forEach(item => {
+    item.addEventListener('click', () => {
+      searchFilter = item.dataset.dev;
+      closeCmdPalette();
+      // Apply filter across all tabs
+      switchTab(currentTab);
+    });
+  });
+}
+
+// Clear search filter on double-⌘K
+let lastCmdK = 0;
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    const now = Date.now();
+    if (now - lastCmdK < 400 && searchFilter) {
+      searchFilter = '';
+      closeCmdPalette();
+      switchTab(currentTab);
+    }
+    lastCmdK = now;
+  }
+});
+
+// ============================================================
+// WINDOW RESIZE HANDLER
+// ============================================================
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (currentTab === 'overview') renderOverview();
+    if (currentTab === 'trends') renderTrendsChart();
+    if (currentTab === 'roi') calculateROI();
+  }, 200);
+});
+
+// ============================================================
+// INITIAL RENDER
+// ============================================================
+renderOverview();
+renderDevTable();
+renderToolChart();
+renderLinkage();
+renderTrendsChart();
+calculateROI();
+
+// Animate initial tab
+requestAnimationFrame(() => {
+  document.querySelectorAll('#tab-overview .anim-in').forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), i * 80 + 100);
+  });
+});
+</script>
+
+</body>
+</html>

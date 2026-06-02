@@ -1,0 +1,6 @@
+{
+    "_comment": "Map Claude Code hashed user.id → readable developer name. Get your hash from the OTEL receiver output, then add it here.",
+    "a1b2c3d4e5f6": "Alice Chen",
+    "f7e8d9c0b1a2": "Bob Kumar",
+    "1234abcd5678": "Charlie Park"
+}

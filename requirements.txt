@@ -1,0 +1,20 @@
+# Claude Code Cost Visibility, Control & Developer Productivity
+# Python 3.9+ required
+
+# === Core Dependencies ===
+flask>=2.3.0                    # OTEL receiver HTTP server
+boto3>=1.28.0                   # AWS SDK (CloudWatch, Lambda, SNS, Logs)
+botocore>=1.31.0                # AWS low-level SDK (error handling)
+
+# === MCP Tools ===
+mcp>=0.1.0                      # Model Context Protocol SDK
+pydantic>=2.0.0                 # Data validation for MCP tools
+
+# === Optional: Enterprise OTEL Receiver v2 ===
+# (auto-installed by the script if missing, listed here for CI/CD)
+requests>=2.28.0                # HTTP client (webhook testing)
+
+# === Development & Testing ===
+pytest>=7.0.0                   # Unit testing
+pytest-mock>=3.10.0             # Mock AWS services in tests
+moto>=4.1.0                     # AWS service mocking (CloudWatch, SNS)
